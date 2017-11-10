@@ -17,7 +17,6 @@ def get_html(url):
     response = Response(resp)
     return response
 
-
 def parse_html(html):
     """
     입력받은 마음의 소리 웹툰 페이지 html에서 마음의소리의 회차, 제목 url을 추출하여
@@ -71,20 +70,25 @@ class Parser(Actor):
     def receiveMessage(self, response, sender):
         if isinstance(response, Response):
             parse_result = parse_html(response.text)
-            printer = self.createActor(Printer)
+            printer_manager = self.createActor(PrinterManager)
             #nextTo = response.sendTo.pop(0)
             #print("nextTo: {}".format(nextTo))
-            self.send(printer, parse_result)
+            self.send(printer_manager, parse_result)
 
+
+class PrinterManager(Actor):
+    def receiveMessage(self, result, sender):
+        if isinstance(result, ParseResult):
+            printer = self.createActor(Printer)
+            for item in result.items:
+                self.send(printer, item)
 
 
 class Printer(Actor):
     def receiveMessage(self, webtoon_infos, sender):
-        if isinstance(webtoon_infos, ParseResult):
+        if isinstance(webtoon_infos, tuple):
             idx = 0
-            for w_info in webtoon_infos.items:
-                idx += 1
-                print("index: {}, list_num: {}, info: {}".format(idx, w_info[0], w_info))
+            print("index: {}, list_num: {}, info: {}".format(idx, webtoon_infos[0], webtoon_infos))
 
 
 # class Hello(Actor):
